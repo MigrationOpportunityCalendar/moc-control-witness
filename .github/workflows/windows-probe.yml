@@ -1,0 +1,32 @@
+name: Synthetic Windows probe
+on:
+  workflow_dispatch:
+permissions: {}
+jobs:
+  probe:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    env:
+      PROBE_REPOSITORY: ${{ github.repository }}
+      PROBE_REF: ${{ github.ref }}
+    steps:
+      - name: Synthetic in-memory Windows checks
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)) { throw 'Windows required' }
+          $architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+          if ($architecture -ne 'X64') { throw 'X64 required' }
+          $synthetic = [System.Text.Encoding]::UTF8.GetBytes('MOC-SYNTHETIC-WINDOWS-PROBE-V1')
+          $digest = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($synthetic))
+          Write-Output "WINDOWS_VERSION=$([Environment]::OSVersion.VersionString)"
+          Write-Output "POWERSHELL_VERSION=$($PSVersionTable.PSVersion)"
+          Write-Output "ARCHITECTURE=$architecture"
+          Write-Output "REPOSITORY=$env:PROBE_REPOSITORY"
+          Write-Output "REF=$env:PROBE_REF"
+          Write-Output "SYNTHETIC_SHA256=$digest"
+          Write-Output "TIMESTAMP=$([DateTime]::UtcNow.ToString('o'))"
+          Write-Output 'WINDOWS_RUNNER_PROBE=PASS'
+          Write-Output 'MOC_PRODUCTION_ACTIVATED=false'
+          Write-Output 'PRIVATE_STATE_ACCESSED=false'
+          Write-Output 'REAL_MOC_DATA_USED=false'
